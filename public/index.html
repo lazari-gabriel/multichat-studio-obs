@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MultiChat Studio — Painel de Controle OBS</title>
+  <link rel="icon" type="image/png" href="/logo.png">
+  <link rel="apple-touch-icon" href="/logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+  <div class="studio-shell">
+    <!-- Top Bar -->
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-badge">
+          <img src="/logo.png" alt="MultiChat Studio" class="brand-logo-img">
+        </div>
+        <div>
+          <div class="brand-title-row">
+            <h1>MultiChat Studio</h1>
+            <span class="version-pill">PRO OVERLAY</span>
+          </div>
+          <p class="brand-sub">Twitch • Kick • YouTube • TikTok — Design <code>chat.html</code> com Emotes & Badges</p>
+        </div>
+      </div>
+
+      <!-- Navegação de Módulos (Chat vs Redes Sociais) -->
+      <div class="studio-nav-tabs" role="tablist">
+        <button type="button" class="studio-tab-btn active" id="tab-btn-chat" data-tab="chat">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+          Chat Multiplataforma
+        </button>
+        <button type="button" class="studio-tab-btn" id="tab-btn-socials" data-tab="socials">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+          Redes Sociais
+          <span class="tab-badge-new">NOVO</span>
+        </button>
+      </div>
+
+      <div class="topbar-actions">
+        <div class="server-pill" id="server-pill">
+          <span class="status-dot online"></span>
+          <span id="server-status-text">Servidor Online</span>
+        </div>
+
+        <button id="copy-overlay-btn" class="btn btn-glow" title="Copiar link do Chat para o OBS">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+          URL Chat OBS
+        </button>
+
+        <button id="copy-socials-top-btn" class="btn btn-outline" title="Copiar link separado das Redes Sociais para o OBS">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+          URL Redes OBS
+        </button>
+
+        <a href="/overlay" id="open-active-overlay-link" target="_blank" class="btn btn-outline">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+          Abrir Overlay
+        </a>
+      </div>
+    </header>
+
+    <!-- ABA 1: CHAT MULTIPLATAFORMA -->
+    <div class="dashboard-grid" id="view-chat">
+      <!-- COLUNA 1: Canais & Plataformas -->
+      <section class="panel">
+        <div class="panel-header">
+          <div>
+            <h2>📡 Canais Conectados</h2>
+            <p>Ative as plataformas da sua live e digite seu usuário.</p>
+          </div>
+        </div>
+
+        <form id="platforms-form" class="platforms-list">
+          <!-- TWITCH -->
+          <div class="plat-card twitch-card" id="card-twitch">
+            <div class="plat-card-top">
+              <div class="plat-title">
+                <div class="plat-icon twitch-bg">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="#fff"><path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0h1.714v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714z"/></svg>
+                </div>
+                <div>
+                  <strong>Twitch</strong>
+                  <span class="plat-status" id="status-twitch">Desconectado</span>
+                </div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="twitch-enabled">
+                <span class="slider"></span>
+              </label>
+            </div>
+            <div class="plat-input-group">
+              <input type="text" id="twitch-channel" class="input-field" placeholder="Canal (ex: gabriellazarixd)">
+            </div>
+          </div>
+
+          <!-- KICK -->
+          <div class="plat-card kick-card" id="card-kick">
+            <div class="plat-card-top">
+              <div class="plat-title">
+                <div class="plat-icon kick-bg">
+                  <svg viewBox="0 0 24 24" width="16" height="16"><path d="M1.333 0h8v5.333H12V2.667h2.667V0h8v8H20v2.667h-2.667v2.666H20V16h2.667v8h-8v-2.667H12v-2.666H9.333V24h-8Z" fill="#000"/></svg>
+                </div>
+                <div>
+                  <strong>Kick</strong>
+                  <span class="plat-status" id="status-kick">Desconectado</span>
+                </div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="kick-enabled">
+                <span class="slider"></span>
+              </label>
+            </div>
+            <div class="plat-input-group">
+              <input type="text" id="kick-channel" class="input-field" placeholder="Canal da Kick (ex: gabriellazarixd)">
+            </div>
+          </div>
+
+          <!-- YOUTUBE -->
+          <div class="plat-card youtube-card" id="card-youtube">
+            <div class="plat-card-top">
+              <div class="plat-title">
+                <div class="plat-icon youtube-bg">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="#fff"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+                </div>
+                <div>
+                  <strong>YouTube Live</strong>
+                  <span class="plat-status" id="status-youtube">Desconectado</span>
+                </div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="youtube-enabled">
+                <span class="slider"></span>
+              </label>
+            </div>
+            <div class="plat-input-group">
+              <input type="text" id="youtube-target" class="input-field" placeholder="@Handle, ID ou Link da Live">
+            </div>
+          </div>
+
+          <!-- TIKTOK -->
+          <div class="plat-card tiktok-card" id="card-tiktok">
+            <div class="plat-card-top">
+              <div class="plat-title">
+                <div class="plat-icon tiktok-bg">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="#fff"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.24 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg>
+                </div>
+                <div>
+                  <strong>TikTok Live</strong>
+                  <span class="plat-status" id="status-tiktok">Desconectado</span>
+                </div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="tiktok-enabled">
+                <span class="slider"></span>
+              </label>
+            </div>
+            <div class="plat-input-group">
+              <input type="text" id="tiktok-username" class="input-field" placeholder="@usuario do TikTok">
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-save" id="save-platforms-btn">
+            💾 Salvar & Conectar Canais
+          </button>
+        </form>
+
+        <!-- OBS Quick Link Card -->
+        <div class="obs-info-box">
+          <div class="obs-info-title">
+            <span>🔗 URL para Fonte "Navegador" no OBS</span>
+            <span class="tag-pill">450x800</span>
+          </div>
+          <div class="obs-url-copy" id="quick-copy-box" title="Clique para copiar">
+            <code>http://localhost:3333/overlay</code>
+            <span>Copiar</span>
+          </div>
+          <p class="obs-note">O seu arquivo <code>Desktop\chat.html</code> também foi atualizado e sincronizado automaticamente!</p>
+        </div>
+      </section>
+
+      <!-- COLUNA 2: Preview ao Vivo & Simulador -->
+      <section class="panel preview-panel">
+        <div class="panel-header">
+          <div>
+            <h2>🎬 Monitor ao Vivo & Simulador</h2>
+            <p>Veja como o seu chat está aparecendo no OBS em tempo real.</p>
+          </div>
+          <button id="clear-preview-btn" class="btn btn-sm">Limpar Tela</button>
+        </div>
+
+        <!-- Live Stage -->
+        <div class="stage-wrapper">
+          <div id="preview-chat-container" class="stage-chat">
+            <!-- Mensagens ao vivo entram aqui no formato exato do chat.html -->
+          </div>
+        </div>
+
+        <!-- Simulador Rápido -->
+        <div class="simulator-box">
+          <div class="sim-label">Disparar Teste Rápido por Plataforma:</div>
+          <div class="sim-buttons">
+            <button type="button" class="sim-btn sim-twitch" data-platform="twitch">
+              <span>🟣</span> Twitch + Sub
+            </button>
+            <button type="button" class="sim-btn sim-kick" data-platform="kick">
+              <span>🟢</span> Kick + Sub
+            </button>
+            <button type="button" class="sim-btn sim-youtube" data-platform="youtube">
+              <span>🔴</span> YouTube + Membro
+            </button>
+            <button type="button" class="sim-btn sim-tiktok" data-platform="tiktok">
+              <span>⚫</span> TikTok + Sub
+            </button>
+          </div>
+
+          <!-- Mensagem Customizada -->
+          <div class="custom-sim-row">
+            <select id="custom-sim-platform" class="input-select-sm">
+              <option value="twitch">Twitch</option>
+              <option value="kick">Kick</option>
+              <option value="youtube">YouTube</option>
+              <option value="tiktok">TikTok</option>
+            </select>
+            <input type="text" id="custom-sim-user" class="input-field-sm" placeholder="Nome" value="lazari" style="max-width: 105px;">
+            <input type="text" id="custom-sim-msg" class="input-field-sm" placeholder="Digite uma mensagem de teste (ex: Salve família 🔥)...">
+            <label class="sub-check-pill" title="Simular ícone de inscrito">
+              <input type="checkbox" id="custom-sim-sub" checked>
+              <span>⭐ Sub</span>
+            </label>
+            <button type="button" id="send-custom-sim" class="btn btn-send-sim">Enviar</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- COLUNA 3: Estilo & Aparência -->
+      <section class="panel style-panel">
+        <div class="sp-header">
+          <div class="sp-header-left">
+            <div class="sp-header-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>
+            </div>
+            <div>
+              <h2>Estilo & Personalização</h2>
+              <p>Design, tipografia e comportamento do overlay</p>
+            </div>
+          </div>
+          <span class="sp-live-badge">SYNC</span>
+        </div>
+
+        <div class="sp-scroll-body">
+          <!-- SEÇÃO 1: Temas Prontos -->
+          <div class="sp-section">
+            <div class="sp-section-head">
+              <span class="sp-section-title">Temas Prontos</span>
+              <span class="sp-section-hint">1-clique</span>
+            </div>
+
+            <div class="sp-themes-grid">
+              <button type="button" class="preset-btn active" data-preset="chathtml">
+                <div class="sp-theme-preview">
+                  <span class="sp-swatch-pill" style="background:#000000; border-color:#333;"></span>
+                  <span class="sp-swatch-bubble" style="background:#EDEDED; color:#000000;">Aa</span>
+                </div>
+                <div class="sp-theme-meta">
+                  <span class="sp-theme-name">Padrão chat.html</span>
+                  <span class="sp-theme-sub">Clássico P&B</span>
+                </div>
+                <span class="sp-theme-check">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                </span>
+              </button>
+
+              <button type="button" class="preset-btn" data-preset="creme">
+                <div class="sp-theme-preview">
+                  <span class="sp-swatch-pill" style="background:#111215; border-color:#2c2e33;"></span>
+                  <span class="sp-swatch-bubble" style="background:#fcf8ea; color:#151515;">Aa</span>
+                </div>
+                <div class="sp-theme-meta">
+                  <span class="sp-theme-name">Creme Suave</span>
+                  <span class="sp-theme-sub">Quente & Editorial</span>
+                </div>
+                <span class="sp-theme-check">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                </span>
+              </button>
+
+              <button type="button" class="preset-btn" data-preset="dark">
+                <div class="sp-theme-preview">
+                  <span class="sp-swatch-pill" style="background:#9146FF; border-color:#a970ff;"></span>
+                  <span class="sp-swatch-bubble" style="background:#181b24; color:#f8fafc; border:1px solid #2d3348;">Aa</span>
+                </div>
+                <div class="sp-theme-meta">
+                  <span class="sp-theme-name">Dark Neon</span>
+                  <span class="sp-theme-sub">Roxo Cyberpunk</span>
+                </div>
+                <span class="sp-theme-check">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                </span>
+              </button>
+
+              <button type="button" class="preset-btn" data-preset="kick">
+                <div class="sp-theme-preview">
+                  <span class="sp-swatch-pill" style="background:#000000; border-color:#53FC18;"></span>
+                  <span class="sp-swatch-bubble" style="background:#14181d; color:#53FC18; border:1px solid #223026;">Aa</span>
+                </div>
+                <div class="sp-theme-meta">
+                  <span class="sp-theme-name">Kick Green</span>
+                  <span class="sp-theme-sub">Contraste Neon</span>
+                </div>
+                <span class="sp-theme-check">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                </span>
+              </button>
+            </div>
+          </div>
+
+          <!-- SEÇÃO 2: Paleta de Cores -->
+          <div class="sp-section">
+            <div class="sp-section-head">
+              <span class="sp-section-title">Paleta de Cores</span>
+              <span class="sp-section-hint">HEX / RGB</span>
+            </div>
+
+            <div class="sp-color-group">
+              <div class="sp-color-row">
+                <div class="sp-color-info">
+                  <span class="sp-color-label">Caixa de Mensagem</span>
+                  <span class="sp-color-desc">Fundo do balão principal</span>
+                </div>
+                <div class="sp-color-picker-pill">
+                  <label class="sp-swatch-trigger" for="bubble-bg" title="Escolher cor">
+                    <input type="color" id="bubble-bg" value="#EDEDED">
+                    <span class="sp-swatch-ring"></span>
+                  </label>
+                  <input type="text" id="bubble-bg-hex" class="sp-hex-input" value="#EDEDED" maxlength="7" spellcheck="false" aria-label="HEX Cor da Caixa de Mensagem">
+                  <span id="bubble-bg-val" class="sp-sr-only">#EDEDED</span>
+                </div>
+              </div>
+
+              <div class="sp-color-row">
+                <div class="sp-color-info">
+                  <span class="sp-color-label">Texto da Mensagem</span>
+                  <span class="sp-color-desc">Cor da leitura do chat</span>
+                </div>
+                <div class="sp-color-picker-pill">
+                  <label class="sp-swatch-trigger" for="text-color" title="Escolher cor">
+                    <input type="color" id="text-color" value="#000000">
+                    <span class="sp-swatch-ring"></span>
+                  </label>
+                  <input type="text" id="text-color-hex" class="sp-hex-input" value="#000000" maxlength="7" spellcheck="false" aria-label="HEX Cor do Texto">
+                  <span id="text-color-val" class="sp-sr-only">#000000</span>
+                </div>
+              </div>
+
+              <div class="sp-color-row">
+                <div class="sp-color-info">
+                  <span class="sp-color-label">Caixas de Nome & Logo</span>
+                  <span class="sp-color-desc">Fundo da linha superior</span>
+                </div>
+                <div class="sp-color-picker-pill">
+                  <label class="sp-swatch-trigger" for="username-bg" title="Escolher cor">
+                    <input type="color" id="username-bg" value="#000000">
+                    <span class="sp-swatch-ring"></span>
+                  </label>
+                  <input type="text" id="username-bg-hex" class="sp-hex-input" value="#000000" maxlength="7" spellcheck="false" aria-label="HEX Cor do Nome e Logo">
+                  <span id="username-bg-val" class="sp-sr-only">#000000</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- SEÇÃO 3: Layout & Ícones -->
+          <div class="sp-section">
+            <div class="sp-section-head">
+              <span class="sp-section-title">Configurações Visuais</span>
+              <span class="sp-section-hint">Disposição</span>
+            </div>
+
+            <div class="sp-selects-grid">
+              <div class="sp-field-card">
+                <label class="sp-field-label" for="icon-style-select">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                  Estilo do Ícone da Plataforma
+                </label>
+                <div class="sp-select-wrap">
+                  <select id="icon-style-select" class="sp-select">
+                    <option value="white">Branco Minimalista (chat.html)</option>
+                    <option value="colored">Colorido Original</option>
+                  </select>
+                  <span class="sp-select-chevron">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 12 15 18 9"/></svg>
+                  </span>
+                </div>
+              </div>
+
+              <div class="sp-field-card">
+                <label class="sp-field-label" for="direction-select">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+                  Posição / Direção das Mensagens
+                </label>
+                <div class="sp-select-wrap">
+                  <select id="direction-select" class="sp-select">
+                    <option value="top-down">Topo para Baixo (chat.html)</option>
+                    <option value="bottom-up">Baixo para Cima</option>
+                  </select>
+                  <span class="sp-select-chevron">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 12 15 18 9"/></svg>
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- SEÇÃO 4: Dimensões & Comportamento (Sliders) -->
+          <div class="sp-section">
+            <div class="sp-section-head">
+              <span class="sp-section-title">Dimensões & Tempo</span>
+              <span class="sp-section-hint">Ajuste Fino</span>
+            </div>
+
+            <div class="sp-sliders-stack">
+              <!-- Tamanho do Título (Nome do Usuário) -->
+              <div class="sp-slider-card">
+                <div class="sp-slider-header">
+                  <div class="sp-slider-title">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    <span>Tamanho do Título (Nome)</span>
+                  </div>
+                  <strong id="title-size-val" class="sp-val-badge">13px</strong>
+                </div>
+                <div class="sp-range-wrap">
+                  <input type="range" id="title-size" min="10" max="22" value="13" class="sp-range">
+                </div>
+                <div class="sp-slider-scale">
+                  <span>Pequeno (10px)</span>
+                  <span>Grande (22px)</span>
+                </div>
+              </div>
+
+              <!-- Tamanho da Fonte -->
+              <div class="sp-slider-card">
+                <div class="sp-slider-header">
+                  <div class="sp-slider-title">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+                    <span>Tamanho da Fonte (Mensagem)</span>
+                  </div>
+                  <strong id="font-size-val" class="sp-val-badge">15px</strong>
+                </div>
+                <div class="sp-range-wrap">
+                  <input type="range" id="font-size" min="12" max="24" value="15" class="sp-range">
+                </div>
+                <div class="sp-slider-scale">
+                  <span>Compacto (12px)</span>
+                  <span> Grande (24px)</span>
+                </div>
+              </div>
+
+              <!-- Arredondamento -->
+              <div class="sp-slider-card">
+                <div class="sp-slider-header">
+                  <div class="sp-slider-title">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="6" ry="6"/></svg>
+                    <span>Arredondamento da Mensagem</span>
+                  </div>
+                  <strong id="bubble-radius-val" class="sp-val-badge">18px</strong>
+                </div>
+                <div class="sp-range-wrap">
+                  <input type="range" id="bubble-radius" min="6" max="30" value="18" class="sp-range">
+                </div>
+                <div class="sp-slider-scale">
+                  <span>Suave (6px)</span>
+                  <span>Pílula (30px)</span>
+                </div>
+              </div>
+
+              <!-- Tempo na Tela -->
+              <div class="sp-slider-card">
+                <div class="sp-slider-header">
+                  <div class="sp-slider-title">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    <span>Tempo na Tela</span>
+                  </div>
+                  <strong id="fade-time-val" class="sp-val-badge">8s</strong>
+                </div>
+                <div class="sp-range-wrap">
+                  <input type="range" id="fade-time" min="0" max="60" step="1" value="8" class="sp-range">
+                </div>
+                <div class="sp-slider-scale">
+                  <span>0s (Não sumir)</span>
+                  <span>60s</span>
+                </div>
+              </div>
+
+              <!-- Limite de Mensagens -->
+              <div class="sp-slider-card">
+                <div class="sp-slider-header">
+                  <div class="sp-slider-title">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                    <span>Limite de Mensagens</span>
+                  </div>
+                  <strong id="max-messages-val" class="sp-val-badge">8</strong>
+                </div>
+                <div class="sp-range-wrap">
+                  <input type="range" id="max-messages" min="3" max="15" value="8" class="sp-range">
+                </div>
+                <div class="sp-slider-scale">
+                  <span>Mín: 3</span>
+                  <span>Máx: 15</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- SEÇÃO 5: Opções Adicionais -->
+          <div class="sp-section sp-section-last">
+            <div class="sp-section-head">
+              <span class="sp-section-title">Opções Adicionais</span>
+              <span class="sp-section-hint">Elementos & Áudio</span>
+            </div>
+
+            <div class="sp-switches-card">
+              <label class="sp-switch-row" for="show-platform-icon">
+                <div class="sp-switch-info">
+                  <span class="sp-switch-icon">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                  </span>
+                  <div>
+                    <span class="sp-switch-title">Mostrar Logo da Plataforma</span>
+                    <span class="sp-switch-desc">Exibe o ícone ao lado do nome</span>
+                  </div>
+                </div>
+                <div class="sp-toggle">
+                  <input type="checkbox" id="show-platform-icon" checked>
+                  <span class="sp-toggle-track"></span>
+                </div>
+              </label>
+
+              <div class="sp-switch-divider"></div>
+
+              <label class="sp-switch-row" for="show-sub-badge">
+                <div class="sp-switch-info">
+                  <span class="sp-switch-icon">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                  </span>
+                  <div>
+                    <span class="sp-switch-title">Mostrar Ícone de Inscrição</span>
+                    <span class="sp-switch-desc">Exibe Sub Badge / Membro</span>
+                  </div>
+                </div>
+                <div class="sp-toggle">
+                  <input type="checkbox" id="show-sub-badge" checked>
+                  <span class="sp-toggle-track"></span>
+                </div>
+              </label>
+
+              <div class="sp-switch-divider"></div>
+
+              <label class="sp-switch-row" for="sound-enabled">
+                <div class="sp-switch-info">
+                  <span class="sp-switch-icon">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                  </span>
+                  <div>
+                    <span class="sp-switch-title">Efeito Sonoro de Mensagem</span>
+                    <span class="sp-switch-desc">Notificação sonora ao receber</span>
+                  </div>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <button type="button" id="test-sound-btn" class="btn-test-audio" title="Testar efeito sonoro">🔊 Testar</button>
+                  <div class="sp-toggle">
+                    <input type="checkbox" id="sound-enabled">
+                    <span class="sp-toggle-track"></span>
+                  </div>
+                </div>
+              </label>
+
+              <div class="sp-switch-divider"></div>
+
+              <!-- Zona de Arrastar e Soltar Áudio Personalizado -->
+              <div class="sp-audio-drop-wrap">
+                <input type="file" id="custom-sound-file" accept="audio/*" style="display:none;">
+                <div id="custom-sound-dropzone" class="sp-audio-dropzone" title="Arraste um arquivo MP3/WAV/OGG aqui ou clique para escolher">
+                  <div class="sp-audio-drop-icon">🎵</div>
+                  <div class="sp-audio-drop-text">
+                    <strong id="custom-sound-label">Arraste um áudio aqui ou clique</strong>
+                    <span id="custom-sound-sub">MP3, WAV ou OGG • Atual: Som Padrão (Pop)</span>
+                  </div>
+                  <button type="button" id="reset-sound-btn" class="btn-reset-audio" title="Voltar para o som padrão" style="display:none;">↺ Padrão</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ABA 2: REDES SOCIAIS OVERLAY (SEPARADO DO CHAT) -->
+    <div class="dashboard-grid hidden-view" id="view-socials">
+      <!-- COLUNA 1: Gerenciar Redes Sociais + Link Separado -->
+      <section class="panel socials-left-panel">
+        <div class="panel-header">
+          <div>
+            <h2>📱 Suas Redes Sociais</h2>
+            <p>Adicione, edite ou ative as redes que vão aparecer na sua live.</p>
+          </div>
+          <button type="button" id="add-social-btn" class="btn btn-sm btn-add-social">+ Adicionar</button>
+        </div>
+
+        <!-- Lista Editável de Redes Sociais -->
+        <div id="socials-editor-list" class="socials-editor-list">
+          <!-- Renderizado dinamicamente pelo dashboard.js -->
+        </div>
+
+        <button type="button" class="btn btn-save" id="save-socials-btn" style="margin-top: 12px;">
+          💾 Salvar Redes Sociais
+        </button>
+
+        <!-- Link Separado para o OBS -->
+        <div class="obs-info-box" style="margin-top: 14px;">
+          <div class="obs-info-title">
+            <span>🔗 Link Separado das Redes no OBS</span>
+            <span class="tag-pill">800x120</span>
+          </div>
+          <div class="obs-url-copy" id="socials-copy-box" title="Clique para copiar o link das Redes Sociais">
+            <code>http://localhost:3333/socials</code>
+            <span>Copiar</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+            <p class="obs-note" style="margin:0;">Adicione como outra fonte "Navegador" abaixo da sua Webcam.</p>
+            <a href="/socials" target="_blank" class="btn btn-sm" style="text-decoration:none; white-space:nowrap;">Abrir ↗</a>
+          </div>
+        </div>
+      </section>
+
+      <!-- COLUNA 2: Monitor ao Vivo das Redes Sociais (Estilo Gabepeixe) -->
+      <section class="panel preview-panel">
+        <div class="panel-header">
+          <div>
+            <h2>🎬 Monitor ao Vivo — Redes Sociais</h2>
+            <p>Animação sequencial (Pop do Ícone + Expansão do Nome) igual à live do Gabepeixe.</p>
+          </div>
+          <span class="sp-live-badge" id="socials-cycle-badge">LOOP ATIVO</span>
+        </div>
+
+        <!-- Palco de Simulação da Webcam + Barra de Redes -->
+        <div class="stage-wrapper socials-stage-wrapper">
+          <div class="webcam-mock-card">
+            <div class="webcam-mock-frame">
+              <div class="webcam-mock-badge">WEBCAM DA LIVE</div>
+              <div class="webcam-mock-avatar">🎥</div>
+              <p>Posicione a fonte <code>http://localhost:3333/socials</code> logo abaixo da sua câmera no OBS</p>
+            </div>
+            <!-- Barra Animada das Redes Sociais -->
+            <div class="socials-preview-bar-area">
+              <div id="preview-socials-container" class="socials-preview-container layout-horizontal"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Controles de Disparo e Teste -->
+        <div class="simulator-box">
+          <div class="sim-label">Controles de Animação em Tempo Real (Painel + OBS):</div>
+          <div class="socials-action-bar">
+            <button type="button" id="trigger-socials-anim-btn" class="btn btn-glow" style="flex:1; justify-content:center;">
+              ▶ Disparar Animação Agora (Preview + OBS)
+            </button>
+            <button type="button" id="copy-socials-stage-btn" class="btn btn-outline">
+              📋 Copiar Link /socials
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- COLUNA 3: Estilo & Personalização das Redes Sociais -->
+      <section class="panel style-panel">
+        <div class="sp-header">
+          <div class="sp-header-left">
+            <div class="sp-header-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/></svg>
+            </div>
+            <div>
+              <h2>Estilo & Ciclo das Redes</h2>
+              <p>Personalize cores, ícones e tempo da animação</p>
+            </div>
+          </div>
+          <span class="sp-live-badge">SYNC</span>
+        </div>
+
+        <div class="sp-scroll-body">
+          <!-- Temas Prontos das Redes -->
+          <div class="sp-section">
+            <div class="sp-section-head">
+              <span class="sp-section-title">Temas das Redes</span>
+              <span class="sp-section-hint">1-clique</span>
+            </div>
+
+            <div class="sp-themes-grid">
+              <button type="button" class="preset-btn soc-preset-btn active" data-soc-preset="gabepeixe">
+                <div class="sp-theme-preview">
+                  <span class="sp-swatch-pill" style="background:#0F1115; border-color:#333;"></span>
+                  <span class="sp-swatch-bubble" style="background:#EDEDED; color:#0F1115;">@</span>
+                </div>
+                <div class="sp-theme-meta">
+                  <span class="sp-theme-name">Gabepeixe</span>
+                  <span class="sp-theme-sub">Original do Vídeo</span>
+                </div>
+                <span class="sp-theme-check">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                </span>
+              </button>
+
+              <button type="button" class="preset-btn soc-preset-btn" data-soc-preset="creme">
+                <div class="sp-theme-preview">
+                  <span class="sp-swatch-pill" style="background:#111215; border-color:#2c2e33;"></span>
+                  <span class="sp-swatch-bubble" style="background:#fcf8ea; color:#151515;">@</span>
+                </div>
+                <div class="sp-theme-meta">
+                  <span class="sp-theme-name">Creme Suave</span>
+                  <span class="sp-theme-sub">Ícones Coloridos</span>
+                </div>
+                <span class="sp-theme-check">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                </span>
+              </button>
+
+              <button type="button" class="preset-btn soc-preset-btn" data-soc-preset="dark">
+                <div class="sp-theme-preview">
+                  <span class="sp-swatch-pill" style="background:#9146FF; border-color:#a970ff;"></span>
+                  <span class="sp-swatch-bubble" style="background:#181b24; color:#f8fafc; border:1px solid #2d3348;">@</span>
+                </div>
+                <div class="sp-theme-meta">
+                  <span class="sp-theme-name">Dark Neon</span>
+                  <span class="sp-theme-sub">Escuro Moderno</span>
+                </div>
+                <span class="sp-theme-check">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                </span>
+              </button>
+
+              <button type="button" class="preset-btn soc-preset-btn" data-soc-preset="kick">
+                <div class="sp-theme-preview">
+                  <span class="sp-swatch-pill" style="background:#000000; border-color:#53FC18;"></span>
+                  <span class="sp-swatch-bubble" style="background:#14181d; color:#53FC18; border:1px solid #223026;">@</span>
+                </div>
+                <div class="sp-theme-meta">
+                  <span class="sp-theme-name">Kick Green</span>
+                  <span class="sp-theme-sub">Contraste Neon</span>
+                </div>
+                <span class="sp-theme-check">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                </span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Paleta de Cores das Redes -->
+          <div class="sp-section">
+            <div class="sp-section-head">
+              <span class="sp-section-title">Cores das Pílulas</span>
+              <span class="sp-section-hint">HEX / RGB</span>
+            </div>
+
+            <div class="sp-color-group">
+              <div class="sp-color-row">
+                <div class="sp-color-info">
+                  <span class="sp-color-label">Fundo da Pílula</span>
+                  <span class="sp-color-desc">Cor da barra que expande</span>
+                </div>
+                <div class="sp-color-picker-pill">
+                  <label class="sp-swatch-trigger" for="soc-pill-bg">
+                    <input type="color" id="soc-pill-bg" value="#EDEDED">
+                    <span class="sp-swatch-ring"></span>
+                  </label>
+                  <input type="text" id="soc-pill-bg-hex" class="sp-hex-input" value="#EDEDED" maxlength="7" spellcheck="false">
+                </div>
+              </div>
+
+              <div class="sp-color-row">
+                <div class="sp-color-info">
+                  <span class="sp-color-label">Cor do Texto (@usuario)</span>
+                  <span class="sp-color-desc">Cor do nome da rede social</span>
+                </div>
+                <div class="sp-color-picker-pill">
+                  <label class="sp-swatch-trigger" for="soc-text-color">
+                    <input type="color" id="soc-text-color" value="#0F1115">
+                    <span class="sp-swatch-ring"></span>
+                  </label>
+                  <input type="text" id="soc-text-color-hex" class="sp-hex-input" value="#0F1115" maxlength="7" spellcheck="false">
+                </div>
+              </div>
+
+              <div class="sp-color-row">
+                <div class="sp-color-info">
+                  <span class="sp-color-label">Círculo do Ícone</span>
+                  <span class="sp-color-desc">Fundo redondo da logo</span>
+                </div>
+                <div class="sp-color-picker-pill">
+                  <label class="sp-swatch-trigger" for="soc-icon-bg">
+                    <input type="color" id="soc-icon-bg" value="#0F1115">
+                    <span class="sp-swatch-ring"></span>
+                  </label>
+                  <input type="text" id="soc-icon-bg-hex" class="sp-hex-input" value="#0F1115" maxlength="7" spellcheck="false">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Configurações Visuais das Redes -->
+          <div class="sp-section">
+            <div class="sp-section-head">
+              <span class="sp-section-title">Formato & Modo</span>
+              <span class="sp-section-hint">Animação</span>
+            </div>
+
+            <div class="sp-selects-grid">
+              <div class="sp-field-card">
+                <label class="sp-field-label" for="soc-mode-select">Modo de Exibição</label>
+                <div class="sp-select-wrap">
+                  <select id="soc-mode-select" class="sp-select">
+                    <option value="loop">Loop Animado (Abre, Fica e Recolhe)</option>
+                    <option value="always">Sempre Visível (Fixo Aberto)</option>
+                  </select>
+                  <span class="sp-select-chevron">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 12 15 18 9"/></svg>
+                  </span>
+                </div>
+              </div>
+
+              <div class="sp-field-card">
+                <label class="sp-field-label" for="soc-icon-style-select">Estilo do Ícone da Rede</label>
+                <div class="sp-select-wrap">
+                  <select id="soc-icon-style-select" class="sp-select">
+                    <option value="white">Branco Minimalista (Gabepeixe)</option>
+                    <option value="colored">Colorido Oficial</option>
+                  </select>
+                  <span class="sp-select-chevron">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 12 15 18 9"/></svg>
+                  </span>
+                </div>
+              </div>
+
+              <div class="sp-field-card">
+                <label class="sp-field-label" for="soc-layout-select">Alinhamento das Pílulas</label>
+                <div class="sp-select-wrap">
+                  <select id="soc-layout-select" class="sp-select">
+                    <option value="horizontal">Lado a Lado Horizontal (Vídeo)</option>
+                    <option value="vertical">Empilhado Vertical</option>
+                  </select>
+                  <span class="sp-select-chevron">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 12 15 18 9"/></svg>
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sliders de Tempo & Tamanho das Redes -->
+          <div class="sp-section sp-section-last">
+            <div class="sp-section-head">
+              <span class="sp-section-title">Tamanho & Tempos do Loop</span>
+              <span class="sp-section-hint">Ciclo</span>
+            </div>
+
+            <div class="sp-sliders-stack">
+              <div class="sp-slider-card">
+                <div class="sp-slider-header">
+                  <div class="sp-slider-title">
+                    <span>Tamanho da Pílula / Fonte</span>
+                  </div>
+                  <strong id="soc-font-size-val" class="sp-val-badge">15px</strong>
+                </div>
+                <div class="sp-range-wrap">
+                  <input type="range" id="soc-font-size" min="12" max="22" value="15" class="sp-range">
+                </div>
+                <div class="sp-slider-scale">
+                  <span>Compacto (12px)</span>
+                  <span>Grande (22px)</span>
+                </div>
+              </div>
+
+              <div class="sp-slider-card">
+                <div class="sp-slider-header">
+                  <div class="sp-slider-title">
+                    <span>Tempo Aberto na Tela</span>
+                  </div>
+                  <strong id="soc-hold-time-val" class="sp-val-badge">8s</strong>
+                </div>
+                <div class="sp-range-wrap">
+                  <input type="range" id="soc-hold-time" min="3" max="30" value="8" class="sp-range">
+                </div>
+                <div class="sp-slider-scale">
+                  <span>3s</span>
+                  <span>30s</span>
+                </div>
+              </div>
+
+              <div class="sp-slider-card">
+                <div class="sp-slider-header">
+                  <div class="sp-slider-title">
+                    <span>Intervalo para Reaparecer</span>
+                  </div>
+                  <strong id="soc-interval-time-val" class="sp-val-badge">15s</strong>
+                </div>
+                <div class="sp-range-wrap">
+                  <input type="range" id="soc-interval-time" min="5" max="120" step="5" value="15" class="sp-range">
+                </div>
+                <div class="sp-slider-scale">
+                  <span>A cada 5s</span>
+                  <span>A cada 120s</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <div id="toast" class="toast">Configuração salva!</div>
+
+  <script src="dashboard.js"></script>
+</body>
+</html>

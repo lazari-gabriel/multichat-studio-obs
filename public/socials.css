@@ -1,0 +1,140 @@
+:root {
+  --soc-pill-bg: #EDEDED;
+  --soc-text-color: #0F1115;
+  --soc-icon-bg: #0F1115;
+  --soc-font-size: 15px;
+  --soc-pill-height: 38px;
+  --soc-icon-size: 32px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  background: transparent !important;
+  font-family: 'Inter', Arial, Helvetica, sans-serif;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+.socials-container {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  pointer-events: none;
+}
+
+.socials-container.layout-horizontal {
+  flex-direction: row;
+}
+
+.socials-container.layout-vertical {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+/* Pílula Individual Estilo Gabepeixe */
+.social-pill {
+  display: inline-flex;
+  align-items: center;
+  height: var(--soc-pill-height, 38px);
+  padding: 3px;
+  background: var(--soc-pill-bg, #EDEDED);
+  border: 1.5px solid rgba(255, 255, 255, 0.75);
+  border-radius: 999px;
+  box-shadow:
+    0 6px 18px rgba(0, 0, 0, 0.42),
+    0 1px 3px rgba(0, 0, 0, 0.25);
+  opacity: 0;
+  transform: scale(0);
+  transform-origin: center center;
+  transition:
+    transform 280ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    opacity 200ms ease-out,
+    background-color 200ms ease;
+  will-change: transform, opacity;
+}
+
+/* Fase 1: Surge o círculo do ícone */
+.social-pill.stage-pop {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Círculo do Ícone da Rede Social */
+.social-icon-circle {
+  width: calc(var(--soc-pill-height, 38px) - 8px);
+  height: calc(var(--soc-pill-height, 38px) - 8px);
+  min-width: calc(var(--soc-pill-height, 38px) - 8px);
+  border-radius: 50%;
+  background: var(--soc-icon-bg, #0F1115);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.14);
+}
+
+.social-icon-circle svg {
+  width: 56%;
+  height: 56%;
+  display: block;
+}
+
+/* Container Expansível do Texto (@usuario) */
+.social-handle-wrap {
+  max-width: 0;
+  overflow: hidden;
+  padding-left: 0;
+  padding-right: 0;
+  opacity: 0;
+  transition:
+    max-width 440ms cubic-bezier(0.22, 1, 0.36, 1),
+    padding 400ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 280ms ease-out;
+  white-space: nowrap;
+}
+
+.social-handle-text {
+  display: inline-block;
+  color: var(--soc-text-color, #0F1115);
+  font-size: var(--soc-font-size, 15px);
+  font-weight: 800;
+  letter-spacing: -0.2px;
+  line-height: 1;
+  transform: translateX(-10px);
+  transition: transform 400ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Fase 2: Desdobra a pílula para a direita revelando o nome */
+.social-pill.stage-expand .social-handle-wrap {
+  max-width: 280px;
+  padding-left: 9px;
+  padding-right: 14px;
+  opacity: 1;
+}
+
+.social-pill.stage-expand .social-handle-text {
+  transform: translateX(0);
+}
+
+/* Fase 3: Recolhe suavemente */
+.social-pill.stage-retract .social-handle-wrap {
+  max-width: 0;
+  padding-left: 0;
+  padding-right: 0;
+  opacity: 0;
+}
+
+.social-pill.stage-retract .social-handle-text {
+  transform: translateX(-8px);
+}

@@ -1,0 +1,22 @@
+{
+  "name": "live",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@retconned/kick-js": "^0.8.0",
+    "axios": "^1.21.1",
+    "express": "^5.3.0",
+    "tiktok-live-connector": "^2.5.0",
+    "tmi.js": "^1.8.5",
+    "ws": "^8.22.2",
+    "youtube-chat": "^2.2.0"
+  }
+}

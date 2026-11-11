@@ -1,0 +1,71 @@
+{
+  "port": 3333,
+  "platforms": {
+    "twitch": {
+      "enabled": true,
+      "channel": "gabriellazarixd"
+    },
+    "youtube": {
+      "enabled": false,
+      "channelOrLiveId": ""
+    },
+    "tiktok": {
+      "enabled": false,
+      "username": ""
+    },
+    "kick": {
+      "enabled": true,
+      "channel": "lazarixd"
+    }
+  },
+  "styles": {
+    "bubbleBg": "#ffffff",
+    "textColor": "#151515",
+    "usernameBg": "#111215",
+    "usernameColor": "#ffffff",
+    "fontSize": 13,
+    "bubbleRadius": 30,
+    "maxMessages": 6,
+    "fadeTime": 1,
+    "direction": "top-down",
+    "iconStyle": "colored",
+    "showPlatformIcon": true,
+    "showSubBadge": true,
+    "soundEnabled": false,
+    "soundVolume": 0.5,
+    "titleSize": 13
+  },
+  "socials": {
+    "items": [
+      {
+        "id": "soc_1",
+        "platform": "kick",
+        "handle": "trefys",
+        "enabled": true
+      },
+      {
+        "id": "soc_2",
+        "platform": "twitch",
+        "handle": "trefys",
+        "enabled": true
+      },
+      {
+        "id": "soc_3",
+        "platform": "instagram",
+        "handle": "@ze_augustoo_",
+        "enabled": true
+      }
+    ],
+    "styles": {
+      "pillBg": "#ededed",
+      "textColor": "#0f1115",
+      "iconBg": "#0f1115",
+      "iconStyle": "white",
+      "layout": "horizontal",
+      "fontSize": 15,
+      "mode": "loop",
+      "holdTime": 8,
+      "intervalTime": 15
+    }
+  }
+}
