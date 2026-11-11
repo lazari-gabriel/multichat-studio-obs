@@ -429,11 +429,12 @@ function renderMessageDOM(msg, immediate = false) {
   msgEl.style.transform = 'translateY(0) scale(1)';
 }
 
-// Conexão WebSocket com o servidor MultiChat
+// Conexão WebSocket com o servidor MultiChat (suporta salas individuais via ?key=...)
 function connectServer() {
   const wsHost = window.location.host || 'localhost:3333';
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  const wsUrl = `${protocol}//${wsHost}`;
+  const query = window.location.search || '';
+  const wsUrl = `${protocol}//${wsHost}/${query}`;
 
   try {
     ws = new WebSocket(wsUrl);
@@ -462,12 +463,18 @@ function connectServer() {
         } else if (type === 'clear_chat') {
           messageQueue.length = 0;
           chat.innerHTML = '';
+        } else if (type === 'unauthorized') {
+          window.location.href = '/?login=required';
         }
       } catch (e) {}
     };
 
-    ws.onclose = () => {
+    ws.onclose = (ev) => {
       serverConnected = false;
+      if (ev && ev.code === 4001) {
+        window.location.href = '/?login=required';
+        return;
+      }
       setTimeout(connectServer, 2000);
     };
 

@@ -1,3 +1,7 @@
 node_modules/
 .env
 *.log
+users.json
+data/
+public/sounds/
+public/custom_sound.bin

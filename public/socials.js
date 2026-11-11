@@ -176,7 +176,8 @@ function updateSocialsConfig(newSocials) {
 function connectServer() {
   const wsHost = window.location.host || 'localhost:3333';
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  const wsUrl = `${protocol}//${wsHost}`;
+  const query = window.location.search || '';
+  const wsUrl = `${protocol}//${wsHost}/${query}`;
 
   try {
     ws = new WebSocket(wsUrl);
@@ -197,11 +198,17 @@ function connectServer() {
           }
         } else if (type === 'socials_trigger') {
           runAnimationCycle();
+        } else if (type === 'unauthorized') {
+          window.location.href = '/?login=required';
         }
       } catch (e) {}
     };
 
-    ws.onclose = () => {
+    ws.onclose = (ev) => {
+      if (ev && ev.code === 4001) {
+        window.location.href = '/?login=required';
+        return;
+      }
       setTimeout(connectServer, 2000);
     };
 

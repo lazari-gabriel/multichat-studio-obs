@@ -1,7 +1,45 @@
-// MultiChat Studio Dashboard Engine
+// MultiChat Studio Dashboard Engine (Sistema Unificado de Contas + OAuth 2.0 Oficial)
 
 let currentConfig = null;
 let ws = null;
+let currentUser = null;
+let providersConfig = {};
+
+// Segurança: limpa qualquer token legado que tenha ficado salvo em localStorage
+try {
+  localStorage.removeItem('multichat_auth_token');
+  localStorage.removeItem('multichat_user');
+} catch (e) {}
+
+function getActiveOverlayKey() {
+  return currentUser?.overlayToken || '';
+}
+
+function getChatOverlayUrl() {
+  const key = getActiveOverlayKey();
+  if (!key) return `${window.location.origin}/overlay`;
+  return `${window.location.origin}/overlay?key=${encodeURIComponent(key)}`;
+}
+
+function getSocialsOverlayUrl() {
+  const key = getActiveOverlayKey();
+  if (!key) return `${window.location.origin}/socials`;
+  return `${window.location.origin}/socials?key=${encodeURIComponent(key)}`;
+}
+
+async function apiFetch(url, options = {}) {
+  const res = await fetch(url, {
+    ...options,
+    credentials: 'same-origin',
+    headers: {
+      ...(options.headers || {})
+    }
+  });
+  if (res.status === 401 && currentUser) {
+    handleSessionExpired();
+  }
+  return res;
+}
 
 // Elements
 const platformsForm = document.getElementById('platforms-form');
@@ -386,9 +424,26 @@ function seedInitialPreview() {
 // Load config from server
 async function loadConfig() {
   try {
-    const res = await fetch('/api/config');
+    const res = await apiFetch('/api/config');
     const data = await res.json();
     currentConfig = data.config;
+
+    // Se havia backup local das configurações deste usuário e o servidor na nuvem acabou de reiniciar, sincroniza de volta
+    const localBackupKey = `multichat_cfg_${getActiveOverlayKey()}`;
+    const savedLocalStr = localStorage.getItem(localBackupKey);
+    if (savedLocalStr && (!currentConfig.platforms?.twitch?.channel && !currentConfig.platforms?.kick?.channel)) {
+      try {
+        const parsedBackup = JSON.parse(savedLocalStr);
+        if (parsedBackup && parsedBackup.platforms) {
+          currentConfig = { ...currentConfig, ...parsedBackup };
+          apiFetch('/api/config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(currentConfig)
+          }).catch(() => {});
+        }
+      } catch (e) {}
+    }
 
     const p = currentConfig.platforms || {};
     twitchEnabled.checked = Boolean(p.twitch?.enabled);
@@ -465,7 +520,11 @@ async function saveConfig(showFeedback = true) {
   };
 
   try {
-    const res = await fetch('/api/config', {
+    localStorage.setItem(`multichat_cfg_${getActiveOverlayKey()}`, JSON.stringify(payload));
+  } catch (e) {}
+
+  try {
+    const res = await apiFetch('/api/config', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -565,7 +624,7 @@ function handleAudioFileUpload(file) {
       dataUrl = dataUrl.replace(/^data:[^;]+;/, 'data:audio/mpeg;');
     }
     try {
-      const res = await fetch('/api/sound', {
+      const res = await apiFetch('/api/sound', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -624,7 +683,7 @@ resetSoundBtn?.addEventListener('click', async (e) => {
   e.preventDefault();
   e.stopPropagation();
   try {
-    const res = await fetch('/api/sound', { method: 'DELETE' });
+    const res = await apiFetch('/api/sound', { method: 'DELETE' });
     if (res.ok) {
       updateCustomSoundUI(null, null);
       playDashboardSound(true);
@@ -665,19 +724,35 @@ platformsForm.addEventListener('submit', (e) => {
   saveConfig(true);
 });
 
-// Atualiza dinamicamente os links exibidos no painel com o domínio atual (localhost ou online)
-const quickCopyCode = quickCopyBox?.querySelector('code');
-if (quickCopyCode) quickCopyCode.textContent = `${window.location.origin}/overlay`;
-const socialsCopyCode = document.querySelector('#socials-copy-box code');
-if (socialsCopyCode) socialsCopyCode.textContent = `${window.location.origin}/socials`;
-const webcamSocialsCode = document.getElementById('webcam-socials-url-code');
-if (webcamSocialsCode) webcamSocialsCode.textContent = `${window.location.origin}/socials`;
+// Atualiza dinamicamente os links exibidos no painel com o token protegido do usuário logado
+function refreshUserOverlayLinks() {
+  const chatUrl = getChatOverlayUrl();
+  const socialsUrl = getSocialsOverlayUrl();
+
+  const quickCopyCode = quickCopyBox?.querySelector('code');
+  if (quickCopyCode) quickCopyCode.textContent = chatUrl;
+  const socialsCopyCode = document.querySelector('#socials-copy-box code');
+  if (socialsCopyCode) socialsCopyCode.textContent = socialsUrl;
+  const webcamSocialsCode = document.getElementById('webcam-socials-url-code');
+  if (webcamSocialsCode) webcamSocialsCode.textContent = socialsUrl;
+
+  const socialsDirectOpenLink = document.querySelector('#view-socials .obs-info-box a');
+  if (socialsDirectOpenLink) socialsDirectOpenLink.href = socialsUrl;
+
+  const activeLinkEl = document.getElementById('open-active-overlay-link');
+  const viewSocialsEl = document.getElementById('view-socials');
+  if (activeLinkEl) {
+    const isSocialsTab = viewSocialsEl && !viewSocialsEl.classList.contains('hidden-view');
+    activeLinkEl.href = isSocialsTab ? socialsUrl : chatUrl;
+  }
+}
+refreshUserOverlayLinks();
 
 // Copy URL handlers
 function copyObsUrl() {
-  const url = `${window.location.origin}/overlay`;
+  const url = getChatOverlayUrl();
   navigator.clipboard.writeText(url).then(() => {
-    showToast('Link do OBS copiado: ' + url);
+    showToast('Link do seu Chat OBS copiado!');
   });
 }
 copyBtn.addEventListener('click', copyObsUrl);
@@ -686,7 +761,7 @@ quickCopyBox?.addEventListener('click', copyObsUrl);
 clearPreviewBtn?.addEventListener('click', async () => {
   previewContainer.innerHTML = '';
   try {
-    await fetch('/api/clear', { method: 'POST' });
+    await apiFetch('/api/clear', { method: 'POST' });
     showToast('Mensagens limpas da tela!');
   } catch (e) {}
 });
@@ -695,7 +770,7 @@ clearPreviewBtn?.addEventListener('click', async () => {
 document.querySelectorAll('.sim-btn').forEach(btn => {
   btn.addEventListener('click', async () => {
     const platform = btn.dataset.platform;
-    await fetch('/api/test', {
+    await apiFetch('/api/test', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ platform })
@@ -706,11 +781,11 @@ document.querySelectorAll('.sim-btn').forEach(btn => {
 // Custom message simulator
 async function sendCustomSimMessage() {
   const text = customSimMsg.value.trim() || 'Salve família! Live top 🔥';
-  const username = customSimUser.value.trim() || 'lazari';
+  const username = customSimUser.value.trim() || (currentUser?.username || 'lazari');
   const platform = customSimPlatform.value;
   const isSubscriber = customSimSub.checked;
 
-  await fetch('/api/message', {
+  await apiFetch('/api/message', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -731,10 +806,18 @@ customSimMsg?.addEventListener('keydown', (e) => {
   }
 });
 
-// WebSocket connection
+// WebSocket connection (protegido por Cookie HttpOnly mc_sid ou overlayToken)
+let wsReconnectTimer = null;
 function connectWs() {
+  if (!currentUser) return;
+  if (ws) {
+    try { ws.onclose = null; ws.close(); } catch (e) {}
+  }
+  clearTimeout(wsReconnectTimer);
+
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  ws = new WebSocket(`${protocol}//${window.location.host}`);
+  const keyParam = currentUser.overlayToken ? `?key=${encodeURIComponent(currentUser.overlayToken)}` : '';
+  ws = new WebSocket(`${protocol}//${window.location.host}/${keyParam}`);
 
   ws.onopen = () => {
     if (serverStatusText) serverStatusText.textContent = 'Servidor Online';
@@ -753,7 +836,7 @@ function connectWs() {
 
   ws.onclose = () => {
     if (serverStatusText) serverStatusText.textContent = 'Reconectando...';
-    setTimeout(connectWs, 2000);
+    wsReconnectTimer = setTimeout(connectWs, 2000);
   };
 }
 
@@ -838,7 +921,7 @@ function switchStudioTab(tab) {
     viewChat?.classList.add('hidden-view');
     viewSocials?.classList.remove('hidden-view');
     if (openActiveOverlayLink) {
-      openActiveOverlayLink.href = '/socials';
+      openActiveOverlayLink.href = getSocialsOverlayUrl();
       openActiveOverlayLink.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg> Abrir /socials`;
     }
     runSocialsPreviewCycle();
@@ -848,7 +931,7 @@ function switchStudioTab(tab) {
     viewSocials?.classList.add('hidden-view');
     viewChat?.classList.remove('hidden-view');
     if (openActiveOverlayLink) {
-      openActiveOverlayLink.href = '/overlay';
+      openActiveOverlayLink.href = getChatOverlayUrl();
       openActiveOverlayLink.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg> Abrir Overlay`;
     }
   }
@@ -858,9 +941,9 @@ tabBtnChat?.addEventListener('click', () => switchStudioTab('chat'));
 tabBtnSocials?.addEventListener('click', () => switchStudioTab('socials'));
 
 function copySocialsUrl() {
-  const url = `${window.location.origin}/socials`;
+  const url = getSocialsOverlayUrl();
   navigator.clipboard.writeText(url).then(() => {
-    showToast('Link das Redes copiado: ' + url);
+    showToast('Link das suas Redes copiado!');
   });
 }
 
@@ -1124,7 +1207,7 @@ function runSocialsPreviewCycle() {
 triggerSocialsAnimBtn?.addEventListener('click', async () => {
   runSocialsPreviewCycle();
   try {
-    await fetch('/api/socials/trigger', { method: 'POST' });
+    await apiFetch('/api/socials/trigger', { method: 'POST' });
     showToast('Animação disparada no Painel e no OBS!');
   } catch (e) {}
 });
@@ -1195,5 +1278,391 @@ document.querySelectorAll('.soc-preset-btn').forEach(btn => {
   });
 });
 
-loadConfig();
-connectWs();
+// ============================================================================
+// SISTEMA UNIFICADO DE LOGIN, SESSÃO HTTPONLY E OAUTH 2.0 (TWITCH / KICK / GOOGLE)
+// ============================================================================
+const studioShell = document.getElementById('studio-shell');
+const authScreen = document.getElementById('auth-screen');
+const authTabLogin = document.getElementById('auth-tab-login');
+const authTabRegister = document.getElementById('auth-tab-register');
+const loginForm = document.getElementById('login-form');
+const registerForm = document.getElementById('register-form');
+const authErrorBox = document.getElementById('auth-error-box');
+
+const userProfilePill = document.getElementById('user-profile-pill');
+const userAvatarImg = document.getElementById('user-avatar-img');
+const userProviderBadge = document.getElementById('user-provider-badge');
+const userDisplayName = document.getElementById('user-display-name');
+const userUidBadge = document.getElementById('user-uid-badge');
+const logoutBtn = document.getElementById('logout-btn');
+
+const OAUTH_PROVIDER_NAMES = {
+  twitch: 'Twitch',
+  kick: 'Kick',
+  google: 'Google',
+  youtube: 'YouTube Live',
+  tiktok: 'TikTok Live'
+};
+
+function getOAuthErrorMessage(errorCode, providerKey) {
+  const provName = OAUTH_PROVIDER_NAMES[providerKey] || 'Plataforma';
+  const upperProv = String(providerKey || 'OAUTH').toUpperCase();
+
+  switch (errorCode) {
+    case 'provider_not_configured':
+      if (providerKey === 'tiktok') {
+        return 'Integração OAuth com TikTok Live aguarda configuração das credenciais oficiais (TIKTOK_CLIENT_KEY e TIKTOK_CLIENT_SECRET) de um app Login Kit em developers.tiktok.com no arquivo .env do servidor.';
+      }
+      if (providerKey === 'youtube') {
+        return 'Integração OAuth com YouTube Live usa as credenciais Google (GOOGLE_CLIENT_ID e GOOGLE_CLIENT_SECRET) no arquivo .env do servidor.';
+      }
+      return `Integração OAuth com ${provName} aguarda configuração das credenciais oficiais (${upperProv}_CLIENT_ID e ${upperProv}_CLIENT_SECRET) no arquivo .env do servidor.`;
+    case 'youtube_api_disabled':
+      return 'Ative a API "YouTube Data API v3" no Google Cloud Console (APIs e Serviços > Biblioteca) do seu projeto para vincular seu canal do YouTube Live.';
+    case 'youtube_no_channel':
+      return 'Nenhum canal do YouTube foi encontrado nesta Conta Google. Crie um canal no YouTube primeiro e tente vincular novamente.';
+    case 'access_denied':
+      return `Autorização cancelada: você recusou a permissão de acesso no ${provName}.`;
+    case 'invalid_state':
+      return `Sessão de autorização expirada ou inválida (proteção CSRF). Tente conectar com ${provName} novamente.`;
+    case 'invalid_callback':
+      return `Retorno de callback inválido recebido de ${provName}.`;
+    case 'token_exchange_failed':
+      return `Falha ao validar o código de autorização com a API oficial do ${provName}. Verifique Client Secret e Redirect URI.`;
+    case 'profile_fetch_failed':
+      return `Não foi possível obter os dados de perfil da sua conta ${provName}.`;
+    case 'account_already_linked':
+      return `Esta conta ${provName} já está vinculada a outro usuário do MultiChat Studio.`;
+    case 'session_mismatch':
+      return `Sua sessão mudou ou expirou durante a vinculação da conta ${provName}. Faça login novamente.`;
+    case 'login_required':
+      return 'Acesso restrito: faça login na sua conta para acessar esta página.';
+    default:
+      return `Falha ao autenticar com ${provName}. Tente novamente ou entre com usuário e senha.`;
+  }
+}
+
+function showAuthError(msg) {
+  if (!authErrorBox) return;
+  if (!msg) {
+    authErrorBox.classList.add('hidden-view');
+    authErrorBox.textContent = '';
+  } else {
+    authErrorBox.textContent = msg;
+    authErrorBox.classList.remove('hidden-view');
+  }
+}
+
+function setAuthTab(mode) {
+  showAuthError('');
+  if (mode === 'register') {
+    authTabLogin?.classList.remove('active');
+    authTabRegister?.classList.add('active');
+    loginForm?.classList.add('hidden-view');
+    registerForm?.classList.remove('hidden-view');
+    document.getElementById('reg-username')?.focus();
+  } else {
+    authTabRegister?.classList.remove('active');
+    authTabLogin?.classList.add('active');
+    registerForm?.classList.add('hidden-view');
+    loginForm?.classList.remove('hidden-view');
+    document.getElementById('login-username')?.focus();
+  }
+}
+
+authTabLogin?.addEventListener('click', () => setAuthTab('login'));
+authTabRegister?.addEventListener('click', () => setAuthTab('register'));
+
+// Botões de Login Oficial OAuth 2.0 / 2.1 (Twitch, Kick, Google)
+document.querySelectorAll('.btn-social-auth').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const provider = btn.dataset.provider || 'twitch';
+    showAuthError('');
+    window.location.href = `/api/auth/oauth/${encodeURIComponent(provider)}?mode=login`;
+  });
+});
+
+// Renderiza o painel de Contas Vinculadas (Twitch, Kick, Google, YouTube Live, TikTok Live)
+function renderLinkedAccountsUI() {
+  if (!currentUser) return;
+  const linked = currentUser.linkedAccounts || {};
+
+  if (userUidBadge && currentUser.username) {
+    userUidBadge.textContent = `@${currentUser.username}`;
+  }
+
+  ['twitch', 'kick', 'google', 'youtube', 'tiktok'].forEach(prov => {
+    const itemEl = document.querySelector(`.linked-item[data-provider="${prov}"]`);
+    const statusEl = document.getElementById(`linked-status-${prov}`);
+    const btnEl = document.getElementById(`btn-link-${prov}`);
+    const info = linked[prov];
+
+    if (!statusEl || !btnEl) return;
+
+    if (info) {
+      itemEl?.classList.add('is-linked');
+      const label = info.displayName || info.username || info.email || info.providerUserId;
+      statusEl.textContent = `Vinculada: ${label}`;
+      btnEl.textContent = 'Desvincular';
+      btnEl.classList.add('btn-unlink');
+      btnEl.dataset.action = 'unlink';
+    } else {
+      itemEl?.classList.remove('is-linked');
+      const provCfg = providersConfig?.[prov];
+      if (provCfg && provCfg.configured === false) {
+        statusEl.textContent = prov === 'tiktok'
+          ? 'Requer TIKTOK_CLIENT_KEY no .env'
+          : 'Aguardando configuração OAuth (.env)';
+      } else if (prov === 'youtube') {
+        statusEl.textContent = 'Não vinculada (Conta Google)';
+      } else {
+        statusEl.textContent = 'Não vinculada';
+      }
+      btnEl.textContent = 'Vincular';
+      btnEl.classList.remove('btn-unlink');
+      btnEl.dataset.action = 'link';
+    }
+  });
+}
+
+// Eventos de Vincular / Desvincular Contas OAuth com confirmação explícita
+['twitch', 'kick', 'google', 'youtube', 'tiktok'].forEach(prov => {
+  const btnEl = document.getElementById(`btn-link-${prov}`);
+  if (!btnEl) return;
+
+  btnEl.addEventListener('click', async () => {
+    const provName = OAUTH_PROVIDER_NAMES[prov] || prov;
+    const action = btnEl.dataset.action || 'link';
+
+    if (action === 'link') {
+      const extraHint = prov === 'youtube'
+        ? '\n\n(O YouTube Live utiliza a sua Conta Google oficial com permissão de leitura do canal.)'
+        : '';
+      const confirmed = window.confirm(
+        `Deseja vincular sua conta oficial (${provName}) ao seu perfil atual (${currentUser?.displayName || currentUser?.username})?${extraHint}`
+      );
+      if (!confirmed) return;
+      window.location.href = `/api/auth/oauth/${encodeURIComponent(prov)}?mode=link`;
+      return;
+    }
+
+    // Desvincular conta externa
+    const confirmedUnlink = window.confirm(
+      `Tem certeza que deseja desvincular sua conta da ${provName} do seu perfil?`
+    );
+    if (!confirmedUnlink) return;
+
+    btnEl.disabled = true;
+    try {
+      const res = await apiFetch(`/api/auth/link/${encodeURIComponent(prov)}`, {
+        method: 'DELETE'
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        showToast(data.error || `Não foi possível desvincular ${provName}`);
+        return;
+      }
+      currentUser = data.user;
+      renderLinkedAccountsUI();
+      showToast(`Conta ${provName} desvinculada com sucesso.`);
+    } catch (err) {
+      showToast('Erro de comunicação ao desvincular conta.');
+    } finally {
+      btnEl.disabled = false;
+    }
+  });
+});
+
+function applyAuthenticatedSession(user) {
+  currentUser = user;
+
+  if (authScreen) authScreen.classList.add('hidden-view');
+  if (studioShell) studioShell.classList.remove('hidden-view');
+
+  if (userProfilePill) {
+    userProfilePill.style.display = 'inline-flex';
+    const providerIcons = { twitch: '🟣', kick: '🟢', google: '🔴', youtube: '▶️', tiktok: '🎵', local: '👤' };
+    if (userProviderBadge) userProviderBadge.textContent = providerIcons[user.primaryProvider] || '👤';
+    if (userDisplayName) userDisplayName.textContent = user.displayName || user.username;
+
+    if (userAvatarImg) {
+      if (user.avatarUrl) {
+        userAvatarImg.src = user.avatarUrl;
+        userAvatarImg.style.display = 'inline-block';
+      } else {
+        userAvatarImg.style.display = 'none';
+      }
+    }
+  }
+
+  if (customSimUser) {
+    customSimUser.value = user.username || 'streamer';
+  }
+
+  renderLinkedAccountsUI();
+  refreshUserOverlayLinks();
+  loadConfig();
+  connectWs();
+}
+
+function handleSessionExpired() {
+  currentUser = null;
+  if (ws) {
+    try { ws.onclose = null; ws.close(); } catch (e) {}
+  }
+  if (studioShell) studioShell.classList.add('hidden-view');
+  if (userProfilePill) userProfilePill.style.display = 'none';
+  if (authScreen) authScreen.classList.remove('hidden-view');
+  showAuthError('Sua sessão expirou. Faça login novamente para continuar.');
+}
+
+loginForm?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  showAuthError('');
+  const username = document.getElementById('login-username')?.value.trim();
+  const password = document.getElementById('login-password')?.value || '';
+
+  if (!username || !password) {
+    showAuthError('Digite seu usuário/e-mail e sua senha para entrar.');
+    return;
+  }
+
+  const submitBtn = document.getElementById('login-submit-btn');
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Entrando...';
+  }
+
+  try {
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      showAuthError(data.error || 'Falha no login.');
+      return;
+    }
+    showToast(`Bem-vindo de volta, ${data.user.displayName}!`);
+    applyAuthenticatedSession(data.user);
+  } catch (err) {
+    showAuthError('Erro de comunicação com o servidor.');
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = '🔐 Entrar no Meu Painel';
+    }
+  }
+});
+
+registerForm?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  showAuthError('');
+  const username = document.getElementById('reg-username')?.value.trim();
+  const email = document.getElementById('reg-email')?.value.trim();
+  const password = document.getElementById('reg-password')?.value || '';
+
+  if (!username || username.length < 3) {
+    showAuthError('O nome de usuário deve ter pelo menos 3 caracteres.');
+    document.getElementById('reg-username')?.focus();
+    return;
+  }
+  if (!password || password.length < 6) {
+    showAuthError('A senha deve ter pelo menos 6 caracteres por segurança.');
+    document.getElementById('reg-password')?.focus();
+    return;
+  }
+
+  const submitBtn = document.getElementById('register-submit-btn');
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Criando conta...';
+  }
+
+  try {
+    const res = await fetch('/api/auth/register', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, displayName: username, email, password })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      showAuthError(data.error || 'Não foi possível criar a conta.');
+      return;
+    }
+    showToast(`✨ Conta criada com sucesso! Bem-vindo, ${data.user.displayName}!`);
+    applyAuthenticatedSession(data.user);
+  } catch (err) {
+    showAuthError('Erro de comunicação com o servidor.');
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = '✨ Criar Minha Conta Grátis';
+    }
+  }
+});
+
+logoutBtn?.addEventListener('click', async () => {
+  try {
+    await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' });
+  } catch (e) {}
+  currentUser = null;
+  if (ws) {
+    try { ws.onclose = null; ws.close(); } catch (e) {}
+  }
+  if (studioShell) studioShell.classList.add('hidden-view');
+  if (userProfilePill) userProfilePill.style.display = 'none';
+  if (authScreen) authScreen.classList.remove('hidden-view');
+  showAuthError('');
+  showToast('Sessão encerrada com segurança.');
+});
+
+async function initAuthAndDashboard() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const authError = urlParams.get('auth_error');
+  const authSuccess = urlParams.get('auth_success');
+  const authLinked = urlParams.get('auth_linked');
+  const providerParam = urlParams.get('provider');
+
+  // Limpa parâmetros de callback da barra de endereço para evitar loops ao recarregar
+  if (authError || authSuccess || authLinked || urlParams.has('login')) {
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+
+  let pendingErrorMessage = authError ? getOAuthErrorMessage(authError, providerParam) : '';
+
+  try {
+    const res = await fetch('/api/auth/me', { credentials: 'same-origin' });
+    const data = await res.json().catch(() => ({}));
+    if (data.providers) {
+      providersConfig = data.providers;
+    }
+
+    if (res.ok && data.authenticated && data.user) {
+      applyAuthenticatedSession(data.user);
+
+      if (authSuccess) {
+        const pName = OAUTH_PROVIDER_NAMES[authSuccess] || authSuccess;
+        showToast(`Autenticado via ${pName} com sucesso!`);
+      } else if (authLinked) {
+        const pName = OAUTH_PROVIDER_NAMES[authLinked] || authLinked;
+        showToast(`Conta ${pName} vinculada ao seu perfil!`);
+      } else if (pendingErrorMessage) {
+        showToast(pendingErrorMessage);
+      }
+      return;
+    }
+  } catch (e) {}
+
+  // Se não estiver autenticado, exibe tela de login e eventual mensagem de erro do OAuth
+  if (studioShell) studioShell.classList.add('hidden-view');
+  if (authScreen) authScreen.classList.remove('hidden-view');
+  if (pendingErrorMessage) {
+    showAuthError(pendingErrorMessage);
+  }
+}
+
+initAuthAndDashboard();

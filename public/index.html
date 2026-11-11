@@ -9,10 +9,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="dashboard.css">
+  <link rel="stylesheet" href="dashboard.css?v=5">
 </head>
 <body>
-  <div class="studio-shell">
+  <div class="studio-shell hidden-view" id="studio-shell">
     <!-- Top Bar -->
     <header class="topbar">
       <div class="brand">
@@ -42,6 +42,13 @@
       </div>
 
       <div class="topbar-actions">
+        <div class="user-profile-pill" id="user-profile-pill" style="display:none;">
+          <img id="user-avatar-img" class="user-avatar-mini" src="" alt="" style="display:none;">
+          <span class="user-provider-badge" id="user-provider-badge">👤</span>
+          <span class="user-name-label" id="user-display-name">Streamer</span>
+          <button type="button" id="logout-btn" class="btn-logout-mini" title="Encerrar sessão com segurança">Sair</button>
+        </div>
+
         <div class="server-pill" id="server-pill">
           <span class="status-dot online"></span>
           <span id="server-status-text">Servidor Online</span>
@@ -178,6 +185,66 @@
           <div class="obs-url-copy" id="quick-copy-box" title="Clique para copiar">
             <code>http://localhost:3333/overlay</code>
             <span>Copiar</span>
+          </div>
+        </div>
+
+        <!-- Gerenciamento de Contas Vinculadas OAuth 2.0 (Twitch, Kick, Google) -->
+        <div class="linked-accounts-box" id="linked-accounts-box">
+          <div class="linked-accounts-header">
+            <span>🔐 Contas Vinculadas</span>
+            <span class="tag-pill" id="user-uid-badge">OAuth 2.0</span>
+          </div>
+          <div class="linked-accounts-list" id="linked-accounts-list">
+            <div class="linked-item" data-provider="twitch">
+              <div class="linked-item-info">
+                <span class="linked-dot twitch-bg"></span>
+                <div>
+                  <strong>Twitch</strong>
+                  <small id="linked-status-twitch">Não vinculada</small>
+                </div>
+              </div>
+              <button type="button" class="btn-link-action" id="btn-link-twitch" data-provider="twitch">Vincular</button>
+            </div>
+            <div class="linked-item" data-provider="kick">
+              <div class="linked-item-info">
+                <span class="linked-dot kick-bg"></span>
+                <div>
+                  <strong>Kick</strong>
+                  <small id="linked-status-kick">Não vinculada</small>
+                </div>
+              </div>
+              <button type="button" class="btn-link-action" id="btn-link-kick" data-provider="kick">Vincular</button>
+            </div>
+            <div class="linked-item" data-provider="google">
+              <div class="linked-item-info">
+                <span class="linked-dot google-bg"></span>
+                <div>
+                  <strong>Google</strong>
+                  <small id="linked-status-google">Não vinculada</small>
+                </div>
+              </div>
+              <button type="button" class="btn-link-action" id="btn-link-google" data-provider="google">Vincular</button>
+            </div>
+            <div class="linked-item" data-provider="youtube">
+              <div class="linked-item-info">
+                <span class="linked-dot youtube-bg"></span>
+                <div>
+                  <strong>YouTube Live</strong>
+                  <small id="linked-status-youtube">Não vinculada (Conta Google)</small>
+                </div>
+              </div>
+              <button type="button" class="btn-link-action" id="btn-link-youtube" data-provider="youtube">Vincular</button>
+            </div>
+            <div class="linked-item" data-provider="tiktok">
+              <div class="linked-item-info">
+                <span class="linked-dot tiktok-dot-bg"></span>
+                <div>
+                  <strong>TikTok Live</strong>
+                  <small id="linked-status-tiktok">Não vinculada</small>
+                </div>
+              </div>
+              <button type="button" class="btn-link-action" id="btn-link-tiktok" data-provider="tiktok">Vincular</button>
+            </div>
           </div>
         </div>
       </section>
@@ -920,8 +987,92 @@
     </div>
   </div>
 
+  <!-- TELA DE LOGIN E CADASTRO (MULTI-USUÁRIOS + GOOGLE / TWITCH / KICK) -->
+  <div id="auth-screen" class="auth-screen">
+    <div class="auth-card">
+      <div class="auth-brand">
+        <div class="auth-logo-wrap">
+          <img src="/logo.png" alt="MultiChat Studio" class="auth-logo-img">
+        </div>
+        <h2>MultiChat Studio <span class="version-pill">PRO</span></h2>
+        <p>Acesse sua conta ou cadastre-se para liberar seu Painel e Overlays exclusivos</p>
+      </div>
+
+      <div id="auth-main-section">
+        <!-- Abas Entrar vs Criar Conta no topo para fácil acesso -->
+        <div class="auth-tabs">
+          <button type="button" class="auth-tab active" id="auth-tab-login" data-mode="login">Entrar na Conta</button>
+          <button type="button" class="auth-tab" id="auth-tab-register" data-mode="register">Criar Nova Conta</button>
+        </div>
+
+        <div id="auth-error-box" class="auth-error-box hidden-view"></div>
+
+        <!-- Form Login -->
+        <form id="login-form" class="auth-form" novalidate>
+          <div class="auth-field">
+            <label for="login-username">Usuário ou E-mail</label>
+            <input type="text" id="login-username" class="input-field" placeholder="Digite seu usuário (ex: gabriel)" autocomplete="username">
+          </div>
+          <div class="auth-field">
+            <label for="login-password">Senha</label>
+            <input type="password" id="login-password" class="input-field" placeholder="Digite sua senha" autocomplete="current-password">
+          </div>
+          <button type="submit" id="login-submit-btn" class="btn btn-glow auth-submit-btn">
+            🔐 Entrar no Meu Painel
+          </button>
+        </form>
+
+        <!-- Form Cadastro -->
+        <form id="register-form" class="auth-form hidden-view" novalidate>
+          <div class="auth-field">
+            <label for="reg-username">Escolha seu Usuário</label>
+            <input type="text" id="reg-username" class="input-field" placeholder="Ex: gabriellazari" autocomplete="username">
+          </div>
+          <div class="auth-field">
+            <label for="reg-email">Seu E-mail (opcional)</label>
+            <input type="text" id="reg-email" class="input-field" placeholder="seuemail@gmail.com (opcional)" autocomplete="email">
+          </div>
+          <div class="auth-field">
+            <label for="reg-password">Crie uma Senha</label>
+            <input type="password" id="reg-password" class="input-field" placeholder="Crie sua senha de acesso" autocomplete="new-password">
+          </div>
+          <button type="submit" id="register-submit-btn" class="btn btn-save auth-submit-btn">
+            ✨ Criar Minha Conta Grátis
+          </button>
+        </form>
+
+        <div class="auth-divider">
+          <span>ou entre direto com sua plataforma</span>
+        </div>
+      </div>
+
+      <!-- Botões de Login Rápido por Plataforma (Twitch, Kick, Google) -->
+      <div class="auth-social-section" id="auth-social-buttons">
+        <button type="button" class="btn-social-auth btn-social-twitch" data-provider="twitch">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="#ffffff"><path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0h1.714v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714z"/></svg>
+          <span>Continuar com <strong>Twitch</strong></span>
+        </button>
+
+        <button type="button" class="btn-social-auth btn-social-kick" data-provider="kick">
+          <svg viewBox="0 0 24 24" width="16" height="16"><path d="M1.333 0h8v5.333H12V2.667h2.667V0h8v8H20v2.667h-2.667v2.666H20V16h2.667v8h-8v-2.667H12v-2.666H9.333V24h-8Z" fill="#000000"/></svg>
+          <span>Continuar com <strong>Kick</strong></span>
+        </button>
+
+        <button type="button" class="btn-social-auth btn-social-google" data-provider="google">
+          <svg viewBox="0 0 24 24" width="18" height="18">
+            <path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.7l3.1-3.1C17.3 1.8 14.8 1 12 1 7.4 1 3.5 3.6 1.6 7.4l3.7 2.8C6.2 7.2 8.9 5 12 5z"/>
+            <path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.6l3.7 2.9c2.2-2 3.7-5 3.7-8.7z"/>
+            <path fill="#FBBC05" d="M5.3 14.8c-.2-.8-.4-1.6-.4-2.5s.2-1.7.4-2.5L1.6 7C.6 9 0 11.2 0 13.5s.6 4.5 1.6 6.5l3.7-2.9z"/>
+            <path fill="#34A853" d="M12 24c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3.1 0-5.8-2.1-6.7-5l-3.7 2.9C3.5 21.4 7.4 24 12 24z"/>
+          </svg>
+          <span>Continuar com <strong>Google</strong></span>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <div id="toast" class="toast">Configuração salva!</div>
 
-  <script src="dashboard.js"></script>
+  <script src="dashboard.js?v=5"></script>
 </body>
 </html>
