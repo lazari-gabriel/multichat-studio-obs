@@ -452,6 +452,8 @@ input:checked + .slider:before {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 10px;
+  min-width: 0;
   background: #161d2b;
   border: 1px solid #28344e;
   padding: 8px 12px;
@@ -465,11 +467,17 @@ input:checked + .slider:before {
 .obs-url-copy code {
   color: #38bdf8;
   font-size: 12.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  flex: 1;
 }
 .obs-url-copy span {
   font-size: 11.5px;
   font-weight: 600;
   color: #94a3b8;
+  flex-shrink: 0;
 }
 
 .obs-note {
@@ -677,6 +685,10 @@ input:checked + .slider:before {
   padding: 8px 12px;
   border-radius: 8px;
   font-size: 13px;
+}
+
+.input-user-sm {
+  max-width: 105px;
 }
 
 .sub-check-pill {
@@ -1822,4 +1834,335 @@ input:checked + .slider:before {
 .socials-preview-container .social-pill.stage-retract .social-handle-text {
   transform: translateX(-8px);
 }
+
+/* ============================================================
+   RESPONSIVIDADE COMPLETA (NOTEBOOKS, TABLETS E CELULARES)
+   ============================================================ */
+
+/* Notebooks menores e Tablets em paisagem (<= 1260px) */
+@media (max-width: 1260px) {
+  html, body {
+    height: auto;
+    min-height: 100vh;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  body {
+    padding: 14px 18px 28px;
+  }
+
+  .studio-shell {
+    height: auto;
+    min-height: 0;
+  }
+
+  .dashboard-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .style-panel,
+  .socials-left-panel {
+    height: auto;
+    max-height: none;
+    overflow: visible;
+  }
+
+  .style-panel {
+    grid-column: span 2;
+  }
+
+  .sp-scroll-body,
+  .socials-editor-list {
+    overflow: visible;
+    max-height: none;
+  }
+}
+
+/* Tablets em retrato e Celulares grandes (<= 860px) */
+@media (max-width: 860px) {
+  body {
+    padding: 12px 12px 28px;
+  }
+
+  .studio-shell {
+    gap: 12px;
+  }
+
+  .topbar {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 14px 16px;
+    gap: 12px;
+  }
+
+  .brand {
+    width: 100%;
+    gap: 12px;
+  }
+
+  .brand-badge {
+    width: 44px;
+    height: 44px;
+  }
+
+  .brand h1 {
+    font-size: 18px;
+  }
+
+  .brand-sub {
+    font-size: 11.5px;
+    line-height: 1.35;
+  }
+
+  .studio-nav-tabs {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+
+  .studio-tab-btn {
+    justify-content: center;
+    padding: 9px 10px;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  .topbar-actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .server-pill {
+    justify-content: center;
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+
+  .topbar-actions .btn {
+    width: 100%;
+    padding: 9px 10px;
+    font-size: 12.5px;
+    white-space: nowrap;
+  }
+
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .style-panel {
+    grid-column: span 1;
+  }
+
+  .panel {
+    padding: 16px;
+    border-radius: 14px;
+  }
+
+  .stage-wrapper {
+    height: 330px;
+    padding: 14px;
+  }
+
+  .stage-chat .message-box {
+    max-width: calc(100vw - 68px);
+  }
+}
+
+/* Smartphones (<= 600px) */
+@media (max-width: 600px) {
+  body {
+    padding: 10px 10px 24px;
+  }
+
+  .topbar {
+    padding: 12px;
+    border-radius: 14px;
+  }
+
+  .brand-title-row {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .brand h1 {
+    font-size: 17px;
+  }
+
+  .version-pill {
+    font-size: 9.5px;
+    padding: 2px 6px;
+  }
+
+  .studio-tab-btn {
+    font-size: 11.5px;
+    padding: 9px 6px;
+    gap: 5px;
+  }
+
+  .tab-badge-new {
+    font-size: 8.5px;
+    padding: 1px 4px;
+  }
+
+  /* Botões de simulação rápida em grade 2x2 no celular */
+  .sim-buttons {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .sim-btn {
+    padding: 10px 8px;
+    font-size: 12px;
+  }
+
+  /* Simulador customizado organizado em linhas confortáveis para digitar */
+  .custom-sim-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .input-select-sm,
+  .input-user-sm {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    height: 38px;
+  }
+
+  #custom-sim-msg {
+    grid-column: span 2;
+    width: 100%;
+    min-width: 0;
+    height: 40px;
+  }
+
+  .sub-check-pill {
+    justify-content: center;
+    height: 40px;
+  }
+
+  .btn-send-sim {
+    width: 100%;
+    height: 40px;
+    justify-content: center;
+  }
+
+  /* Palco da Webcam e Redes Sociais no celular */
+  .socials-stage-wrapper {
+    height: auto;
+    min-height: 270px;
+    padding: 12px;
+  }
+
+  .webcam-mock-frame {
+    height: 155px;
+    padding: 12px;
+  }
+
+  .webcam-mock-frame p {
+    font-size: 11px;
+    overflow-wrap: anywhere;
+  }
+
+  .socials-action-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .socials-action-bar .btn {
+    width: 100%;
+  }
+
+  /* Painel de Estilo no celular */
+  .sp-header {
+    padding: 14px 14px 12px;
+  }
+
+  .sp-scroll-body {
+    padding: 14px 12px 20px;
+    gap: 16px;
+  }
+
+  .sp-color-row {
+    gap: 8px;
+    padding: 8px 6px;
+  }
+
+  .sp-color-info {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .sp-color-picker-pill {
+    flex-shrink: 0;
+  }
+
+  /* Sliders maiores para toque no celular */
+  .sp-range {
+    height: 8px;
+  }
+
+  .sp-range::-webkit-slider-thumb {
+    width: 20px;
+    height: 20px;
+  }
+
+  .sp-range::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+  }
+
+  .sp-switch-row {
+    gap: 8px;
+  }
+
+  .sp-audio-dropzone {
+    flex-wrap: wrap;
+    padding: 10px;
+  }
+
+  .sp-audio-drop-text {
+    min-width: 140px;
+  }
+
+  .btn-reset-audio {
+    width: 100%;
+    text-align: center;
+    padding: 6px;
+    margin-top: 2px;
+  }
+
+  /* Toast centralizado na parte inferior do celular */
+  .toast {
+    left: 12px;
+    right: 12px;
+    bottom: 14px;
+    text-align: center;
+    padding: 12px 14px;
+    font-size: 13px;
+  }
+}
+
+/* Celulares muito compactos (<= 380px) */
+@media (max-width: 380px) {
+  .sp-themes-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .topbar-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .studio-nav-tabs {
+    grid-template-columns: 1fr;
+  }
+}
+
 

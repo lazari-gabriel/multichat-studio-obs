@@ -670,6 +670,8 @@ const quickCopyCode = quickCopyBox?.querySelector('code');
 if (quickCopyCode) quickCopyCode.textContent = `${window.location.origin}/overlay`;
 const socialsCopyCode = document.querySelector('#socials-copy-box code');
 if (socialsCopyCode) socialsCopyCode.textContent = `${window.location.origin}/socials`;
+const webcamSocialsCode = document.getElementById('webcam-socials-url-code');
+if (webcamSocialsCode) webcamSocialsCode.textContent = `${window.location.origin}/socials`;
 
 // Copy URL handlers
 function copyObsUrl() {
